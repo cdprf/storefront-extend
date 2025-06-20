@@ -147,5 +147,93 @@
             $( '.copyright-text' ).html( newval );
         } );
     } );
+
+    // Breadcrumb Colors
+    wp.customize( 'storefront_child_breadcrumb_text_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.woocommerce-breadcrumb, .storefront-breadcrumb .breadcrumb' ).css( 'color', newval );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_breadcrumb_link_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.woocommerce-breadcrumb a, .storefront-breadcrumb .breadcrumb a' ).css( 'color', newval );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_breadcrumb_bg_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.woocommerce-breadcrumb, .storefront-breadcrumb .breadcrumb' ).css( 'background-color', newval );
+        } );
+    } );
+
+    // Breadcrumb separator - No JS preview needed as it's output directly by PHP filters.
+    // However, if a specific element displayed the separator and needed JS update:
+    // wp.customize( 'storefront_child_breadcrumb_separator', function( value ) {
+    //     value.bind( function( newval ) {
+    //         // Example: $( '.breadcrumb-separator-element' ).text( newval );
+    //     } );
+    // } );
+
+
+    // Pagination Colors
+    wp.customize( 'storefront_child_pagination_text_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.navigation.pagination .nav-links a, .navigation.pagination .nav-links span, .woocommerce-pagination ul.page-numbers li a, .woocommerce-pagination ul.page-numbers li span' ).css( 'color', newval );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_pagination_bg_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.navigation.pagination .nav-links a, .navigation.pagination .nav-links span, .woocommerce-pagination ul.page-numbers li a, .woocommerce-pagination ul.page-numbers li span' ).css( 'background-color', newval );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_pagination_border_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.navigation.pagination .nav-links a, .navigation.pagination .nav-links span, .woocommerce-pagination ul.page-numbers li a, .woocommerce-pagination ul.page-numbers li span' ).css( 'border-color', newval );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_pagination_hover_text_color', function( value ) {
+        value.bind( function( newval ) {
+            var styleId = 'sf-child-pagination-hover-text-style';
+            var css = '.navigation.pagination .nav-links a:hover, ' +
+                      '.navigation.pagination .nav-links span:not(.dots):hover, ' +
+                      '.woocommerce-pagination ul.page-numbers li a:hover, ' +
+                      '.woocommerce-pagination ul.page-numbers li span:not(.dots):hover { color: ' + newval + ' !important; }';
+
+            $( '#' + styleId ).remove();
+            $( 'head' ).append( '<style id="' + styleId + '">' + css + '</style>' );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_pagination_hover_bg_color', function( value ) {
+        value.bind( function( newval ) {
+            var styleId = 'sf-child-pagination-hover-bg-style';
+            var css = '.navigation.pagination .nav-links a:hover, ' +
+                      '.navigation.pagination .nav-links span:not(.dots):hover, ' +
+                      '.woocommerce-pagination ul.page-numbers li a:hover, ' +
+                      '.woocommerce-pagination ul.page-numbers li span:not(.dots):hover { background-color: ' + newval + ' !important; border-color: ' + newval + ' !important; }';
+
+            $( '#' + styleId ).remove();
+            $( 'head' ).append( '<style id="' + styleId + '">' + css + '</style>' );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_pagination_active_text_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.navigation.pagination .nav-links span.current, .woocommerce-pagination ul.page-numbers li span.current' ).css( 'color', newval );
+        } );
+    } );
+
+    wp.customize( 'storefront_child_pagination_active_bg_color', function( value ) {
+        value.bind( function( newval ) {
+            $( '.navigation.pagination .nav-links span.current, .woocommerce-pagination ul.page-numbers li span.current' ).css( {
+                'background-color': newval,
+                'border-color': newval
+            } );
+        } );
+    } );
     
 } )( jQuery );
