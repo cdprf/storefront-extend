@@ -922,6 +922,21 @@ function storefront_child_woocommerce_blog_customize_register( $wp_customize ) {
         'label'   => __( 'Yorum Sayısını Göster', 'storefront-child' ),
         'section' => 'storefront_child_blog_content',
         'type'    => 'checkbox',
+        'priority' => 20, // Assuming this is the priority of the comments control
+    ) );
+
+    // Show Post Tags
+    $wp_customize->add_setting( 'storefront_child_post_meta_tags', array(
+        'default'           => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+    ) );
+
+    $wp_customize->add_control( 'storefront_child_post_meta_tags', array(
+        'label'   => __( 'Etiketleri Göster', 'storefront-child' ),
+        'section' => 'storefront_child_blog_content',
+        'type'    => 'checkbox',
+        'settings' => 'storefront_child_post_meta_tags',
+        'priority' => 25,
     ) );
     
     // Excerpt Uzunluğu
@@ -1022,7 +1037,168 @@ function storefront_child_woocommerce_blog_customize_register( $wp_customize ) {
         'active_callback' => function() {
             return get_theme_mod( 'storefront_child_breadcrumb_enable', true );
         },
+        'priority' => 55, // Assigning a base priority
     ) );
+
+    // Breadcrumb Text Color
+    $wp_customize->add_setting( 'storefront_child_breadcrumb_text_color', array(
+        'default'           => '#666666',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_breadcrumb_text_color_control', array(
+        'label'       => __( 'Breadcrumb Metin Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_breadcrumb_text_color',
+        'priority'    => 60,
+        'active_callback' => function() {
+            return get_theme_mod( 'storefront_child_breadcrumb_enable', true );
+        },
+    ) ) );
+
+    // Breadcrumb Link Color
+    $wp_customize->add_setting( 'storefront_child_breadcrumb_link_color', array(
+        'default'           => '#337ab7',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_breadcrumb_link_color_control', array(
+        'label'       => __( 'Breadcrumb Link Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_breadcrumb_link_color',
+        'priority'    => 65,
+        'active_callback' => function() {
+            return get_theme_mod( 'storefront_child_breadcrumb_enable', true );
+        },
+    ) ) );
+
+    // Breadcrumb Background Color
+    $wp_customize->add_setting( 'storefront_child_breadcrumb_bg_color', array(
+        'default'           => '#f5f5f5',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_breadcrumb_bg_color_control', array(
+        'label'       => __( 'Breadcrumb Arka Plan Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_breadcrumb_bg_color',
+        'priority'    => 70,
+        'active_callback' => function() {
+            return get_theme_mod( 'storefront_child_breadcrumb_enable', true );
+        },
+    ) ) );
+
+    // Breadcrumb Separator
+    $wp_customize->add_setting( 'storefront_child_breadcrumb_separator', array(
+        'default'           => '/',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ) );
+
+    $wp_customize->add_control( 'storefront_child_breadcrumb_separator_control', array(
+        'label'       => __( 'Breadcrumb Ayırıcı', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_breadcrumb_separator',
+        'type'        => 'text',
+        'priority'    => 75,
+        'active_callback' => function() {
+            return get_theme_mod( 'storefront_child_breadcrumb_enable', true );
+        },
+    ) );
+
+    // Pagination Text Color
+    $wp_customize->add_setting( 'storefront_child_pagination_text_color', array(
+        'default'           => '#666666',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_text_color_control', array(
+        'label'       => __( 'Sayfalama Metin Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_text_color',
+        'priority'    => 80,
+    ) ) );
+
+    // Pagination Background Color
+    $wp_customize->add_setting( 'storefront_child_pagination_bg_color', array(
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_bg_color_control', array(
+        'label'       => __( 'Sayfalama Arka Plan Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_bg_color',
+        'priority'    => 85,
+    ) ) );
+
+    // Pagination Border Color
+    $wp_customize->add_setting( 'storefront_child_pagination_border_color', array(
+        'default'           => '#dddddd',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_border_color_control', array(
+        'label'       => __( 'Sayfalama Kenarlık Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_border_color',
+        'priority'    => 90,
+    ) ) );
+
+    // Pagination Hover Text Color
+    $wp_customize->add_setting( 'storefront_child_pagination_hover_text_color', array(
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_hover_text_color_control', array(
+        'label'       => __( 'Sayfalama Hover Metin Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_hover_text_color',
+        'priority'    => 95,
+    ) ) );
+
+    // Pagination Hover Background Color
+    $wp_customize->add_setting( 'storefront_child_pagination_hover_bg_color', array(
+        'default'           => '#337ab7',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_hover_bg_color_control', array(
+        'label'       => __( 'Sayfalama Hover Arka Plan Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_hover_bg_color',
+        'priority'    => 100,
+    ) ) );
+
+    // Pagination Active Text Color
+    $wp_customize->add_setting( 'storefront_child_pagination_active_text_color', array(
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_active_text_color_control', array(
+        'label'       => __( 'Sayfalama Aktif Metin Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_active_text_color',
+        'priority'    => 105,
+    ) ) );
+
+    // Pagination Active Background Color
+    $wp_customize->add_setting( 'storefront_child_pagination_active_bg_color', array(
+        'default'           => '#337ab7',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'storefront_child_pagination_active_bg_color_control', array(
+        'label'       => __( 'Sayfalama Aktif Arka Plan Rengi', 'storefront-child' ),
+        'section'     => 'storefront_child_blog_content',
+        'settings'    => 'storefront_child_pagination_active_bg_color',
+        'priority'    => 110,
+    ) ) );
     
     // Tek Yazı Sayfa Ayarları
     $wp_customize->add_setting( 'storefront_child_single_post_layout', array(
@@ -1096,6 +1272,20 @@ function storefront_child_woocommerce_blog_css() {
     $sidebar_position = get_theme_mod( 'storefront_child_sidebar_position', 'right' );
     $sidebar_width = get_theme_mod( 'storefront_child_sidebar_width', 25 );
     $breadcrumb_style = get_theme_mod( 'storefront_child_breadcrumb_style', 'default' );
+
+    // Breadcrumb Colors
+    $breadcrumb_text_color = get_theme_mod('storefront_child_breadcrumb_text_color', '#666666');
+    $breadcrumb_link_color = get_theme_mod('storefront_child_breadcrumb_link_color', '#337ab7');
+    $breadcrumb_bg_color = get_theme_mod('storefront_child_breadcrumb_bg_color', '#f5f5f5');
+
+    // Pagination Colors
+    $pagination_text_color = get_theme_mod('storefront_child_pagination_text_color', '#666666');
+    $pagination_bg_color = get_theme_mod('storefront_child_pagination_bg_color', '#ffffff');
+    $pagination_border_color = get_theme_mod('storefront_child_pagination_border_color', '#dddddd');
+    $pagination_hover_text_color = get_theme_mod('storefront_child_pagination_hover_text_color', '#ffffff');
+    $pagination_hover_bg_color = get_theme_mod('storefront_child_pagination_hover_bg_color', '#337ab7');
+    $pagination_active_text_color = get_theme_mod('storefront_child_pagination_active_text_color', '#ffffff');
+    $pagination_active_bg_color = get_theme_mod('storefront_child_pagination_active_bg_color', '#337ab7');
     
     ?>
     <style type="text/css">
@@ -1333,7 +1523,178 @@ function storefront_child_woocommerce_blog_css() {
             border-radius: 25px;
         }
         <?php endif; ?>
+
+        /* Breadcrumb Color Customizations */
+        <?php if (get_theme_mod('storefront_child_breadcrumb_enable', true)) : ?>
+        .woocommerce-breadcrumb,
+        .storefront-breadcrumb .breadcrumb {
+            color: <?php echo esc_attr($breadcrumb_text_color); ?>;
+            background-color: <?php echo esc_attr($breadcrumb_bg_color); ?>;
+        }
+
+        .woocommerce-breadcrumb a,
+        .storefront-breadcrumb .breadcrumb a {
+            color: <?php echo esc_attr($breadcrumb_link_color); ?>;
+        }
+        <?php endif; ?>
+
+        /* Pagination Stilleri */
+        .navigation.pagination .nav-links a,
+        .navigation.pagination .nav-links span,
+        .woocommerce-pagination ul.page-numbers li a,
+        .woocommerce-pagination ul.page-numbers li span {
+            color: <?php echo esc_attr($pagination_text_color); ?>;
+            background-color: <?php echo esc_attr($pagination_bg_color); ?>;
+            border: 1px solid <?php echo esc_attr($pagination_border_color); ?>;
+        }
+
+        .navigation.pagination .nav-links a:hover,
+        .navigation.pagination .nav-links span.dots:hover, /* Target dots specifically if they shouldn't change */
+        .woocommerce-pagination ul.page-numbers li a:hover,
+        .woocommerce-pagination ul.page-numbers li span.dots:hover { /* Target dots specifically */
+            color: <?php echo esc_attr($pagination_hover_text_color); ?>;
+            background-color: <?php echo esc_attr($pagination_hover_bg_color); ?>;
+            border-color: <?php echo esc_attr($pagination_hover_bg_color); ?>;
+        }
+
+        /* Ensure dots don't get hover styles if not desired - override */
+        .navigation.pagination .nav-links span.dots:hover,
+        .woocommerce-pagination ul.page-numbers li span.dots:hover {
+            color: <?php echo esc_attr($pagination_text_color); ?>; /* Keep original text color */
+            background-color: <?php echo esc_attr($pagination_bg_color); ?>; /* Keep original background */
+            border-color: <?php echo esc_attr($pagination_border_color); ?>; /* Keep original border */
+        }
+
+        .navigation.pagination .nav-links span.current,
+        .woocommerce-pagination ul.page-numbers li span.current {
+            color: <?php echo esc_attr($pagination_active_text_color); ?>;
+            background-color: <?php echo esc_attr($pagination_active_bg_color); ?>;
+            border-color: <?php echo esc_attr($pagination_active_bg_color); ?>;
+        }
     </style>
     <?php
 }
+
+// ==============================================
+// CONDITIONAL POST TAGS DISPLAY
+// ==============================================
+
+// Helper function storefront_categorized_blog (if not already in child theme)
+// This function is used by Storefront to check if there's more than one category.
+if ( ! function_exists( 'storefront_categorized_blog' ) ) {
+    function storefront_categorized_blog() {
+        if ( false === ( $all_the_cool_cats = get_transient( 'storefront_categories' ) ) ) {
+            // Create an array of all the categories that are attached to posts.
+            $all_the_cool_cats = get_categories( array(
+                'fields'     => 'ids',
+                'hide_empty' => 1,
+                // We only need to know if there is more than one category.
+                'number'     => 2,
+            ) );
+
+            // Count the number of categories that are attached to the posts.
+            $all_the_cool_cats = count( $all_the_cool_cats );
+
+            set_transient( 'storefront_categories', $all_the_cool_cats );
+        }
+
+        if ( $all_the_cool_cats > 1 ) {
+            // This blog has more than 1 category so storefront_categorized_blog should return true.
+            return true;
+        } else {
+            // This blog only has 1 category so storefront_categorized_blog should return false.
+            return false;
+        }
+    }
+}
+
+/**
+ * Display categories and conditionally tags for posts.
+ * Replaces the parent theme's storefront_post_taxonomy function.
+ */
+function storefront_child_post_taxonomy() {
+    // Ensure this function is only called on single posts or archive pages where appropriate
+    if ( ! is_singular( 'post' ) && ! is_archive() && ! is_home() ) {
+        // Added ! is_home() for completeness, though storefront_post_taxonomy typically targets single/archive
+        return;
+    }
+
+    // Check if we are in the loop, if not, this function might be called prematurely.
+    if ( ! in_the_loop() ) {
+        return;
+    }
+
+    $has_output = false;
+    $output = '<div class="post-meta-container">'; // Custom wrapper to ensure styling doesn't conflict
+
+    // Display categories (adapted from Storefront's storefront_post_taxonomy())
+    /* translators: Used between list items, there is a space after the comma. */
+    $categories_list = get_the_category_list( esc_html__( ', ', 'storefront-child' ) );
+    if ( $categories_list && storefront_categorized_blog() ) {
+        $output .= sprintf( '<span class="cat-links">' . esc_html__( 'Posted in %1$s', 'storefront-child' ) . '</span>', $categories_list ); // WPCS: XSS OK.
+        $has_output = true;
+    }
+
+    // Conditionally display tags
+    $show_tags = get_theme_mod( 'storefront_child_post_meta_tags', true );
+    if ( $show_tags ) {
+        /* translators: Used between list items, there is a space after the comma. */
+        $tags_list = get_the_tag_list( '', esc_html__( ', ', 'storefront-child' ) );
+        if ( $tags_list ) {
+            if ( $has_output ) {
+                $output .= '<span class="meta-separator"> | </span>'; // Add a separator if categories were displayed
+            }
+            $output .= sprintf( '<span class="tags-links">' . esc_html__( 'Tagged %1$s', 'storefront-child' ) . '</span>', $tags_list ); // WPCS: XSS OK.
+            $has_output = true;
+        }
+    }
+
+    $output .= '</div>'; // Close wrapper
+
+    if ( $has_output ) {
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo $output;
+    }
+}
+
+/**
+ * Removes the default Storefront post taxonomy function and hooks in the child theme's version.
+ */
+function storefront_child_init_post_taxonomy() {
+    // Ensure parent function exists before trying to remove it, good practice.
+    if ( function_exists( 'storefront_post_taxonomy' ) ) {
+        remove_action( 'storefront_single_post_header_after', 'storefront_post_taxonomy', 40 );
+        remove_action( 'storefront_post_header_after', 'storefront_post_taxonomy', 40 );
+
+        // Add new actions for the child theme's function
+        add_action( 'storefront_single_post_header_after', 'storefront_child_post_taxonomy', 40 );
+        add_action( 'storefront_post_header_after', 'storefront_child_post_taxonomy', 40 );
+    }
+}
+add_action( 'init', 'storefront_child_init_post_taxonomy', 15 );
+
+
+// ==============================================
+// BREADCRUMB CUSTOMIZATIONS
+// ==============================================
+
+/**
+ * Customizes the breadcrumb arguments to use a custom separator.
+ *
+ * @param array $args Default breadcrumb arguments.
+ * @return array Modified breadcrumb arguments.
+ */
+function storefront_child_custom_breadcrumb_args( $args ) {
+    $custom_separator = get_theme_mod( 'storefront_child_breadcrumb_separator', '/' );
+
+    // Ensure there's a separator and it's not just whitespace
+    if ( ! empty( trim( $custom_separator ) ) ) {
+        // Add spaces around the separator for nice formatting and escape it.
+        $args['delimiter'] = '&nbsp;' . esc_html( trim( $custom_separator ) ) . '&nbsp;';
+    }
+    return $args;
+}
+add_filter( 'woocommerce_breadcrumb_defaults', 'storefront_child_custom_breadcrumb_args' );
+add_filter( 'storefront_breadcrumb_args', 'storefront_child_custom_breadcrumb_args' );
+
 ?>
