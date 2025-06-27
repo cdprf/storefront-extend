@@ -15,6 +15,11 @@ add_action( 'wp_enqueue_scripts', 'storefront_child_theme_enqueue_styles' );
  */
 
 
+// ==============================================
+// SECURITY HARDENING
+// ==============================================
+remove_action( 'wp_head', 'wp_generator' ); // Remove WordPress version number
+
 
  // Customizer seçeneklerini ekle
 
@@ -1952,5 +1957,287 @@ function storefront_child_ajax_reset_theme_settings() {
 }
 add_action( 'wp_ajax_storefront_child_reset_theme_settings', 'storefront_child_ajax_reset_theme_settings' );
 // No wp_ajax_nopriv_ action as this is for logged-in admins with 'edit_theme_options' capabilities.
+
+
+// ==============================================
+// ADMIN POST LIST ENHANCEMENTS
+// ==============================================
+
+/**
+ * Adds a 'Word Count' column to the admin posts list.
+ *
+ * @param array $columns Existing columns.
+ * @return array Modified columns.
+ */
+function storefront_child_add_word_count_column_header( $columns ) {
+    $new_columns = array();
+    $word_count_column_added = false;
+
+    foreach ( $columns as $key => $title ) {
+        $new_columns[$key] = $title;
+        if ( 'title' === $key && !$word_count_column_added) {
+            $new_columns['word_count'] = __( 'Word Count', 'storefront-child' );
+            $word_count_column_added = true;
+        }
+    }
+
+    // Fallback if 'title' column was not found (e.g. different post type or heavily modified columns)
+    // Or if you prefer to add it after 'author' as a secondary option
+    if ( !$word_count_column_added ) {
+        $temp_columns = array();
+        foreach ($new_columns as $key => $title) {
+            $temp_columns[$key] = $title;
+            if ('author' === $key && !$word_count_column_added) {
+                 $temp_columns['word_count'] = __( 'Word Count', 'storefront-child' );
+                 $word_count_column_added = true;
+            }
+        }
+        $new_columns = $temp_columns;
+    }
+
+    // Fallback: If still not added (neither title nor author found), add to the end.
+    if ( !$word_count_column_added ) {
+        $new_columns['word_count'] = __( 'Word Count', 'storefront-child' );
+    }
+
+    return $new_columns;
+}
+add_filter( 'manage_posts_columns', 'storefront_child_add_word_count_column_header' );
+
+/**
+ * Displays the word count in the 'Word Count' column.
+ *
+ * @param string $column_name The name of the current column.
+ * @param int    $post_id     The ID of the current post.
+ */
+function storefront_child_display_word_count_column_content( $column_name, $post_id ) {
+    if ( 'word_count' === $column_name ) {
+        $content = get_post_field( 'post_content', $post_id );
+        if ( $content ) {
+            // Strip HTML tags and then count words
+            $stripped_content = strip_tags( $content );
+            // Count words using str_word_count
+            $word_count = str_word_count( $stripped_content );
+            echo esc_html( $word_count );
+        } else {
+            echo '0';
+        }
+    }
+}
+add_action( 'manage_posts_custom_column', 'storefront_child_display_word_count_column_content', 10, 2 );
+
+/**
+ * Adds a 'Format Paragraphs' action link to each post in the admin posts list.
+ *
+ * @param array    $actions The existing action links.
+ * @param WP_Post  $post    The current post object.
+ * @return array Modified action links.
+ */
+function storefront_child_add_format_paragraphs_action_link( $actions, $post ) {
+    // Only add the link for 'post' post type
+    if ( $post->post_type === 'post' ) {
+        // Check user capabilities for this specific post
+        if ( current_user_can( 'edit_post', $post->ID ) ) {
+            // Generate a nonce for this action and post
+            $nonce = wp_create_nonce( 'format_paragraphs_nonce_' . $post->ID );
+
+            $actions['format_paragraphs'] = sprintf(
+                '<a href="#" class="format-paragraphs-button" data-postid="%s" data-nonce="%s">%s</a>',
+                esc_attr( $post->ID ),
+                esc_attr( $nonce ),
+                esc_html__( 'Format Paragraphs', 'storefront-child' )
+            );
+        }
+    }
+    return $actions;
+}
+add_filter( 'post_row_actions', 'storefront_child_add_format_paragraphs_action_link', 10, 2 );
+
+/**
+ * Helper callback function for preg_replace_callback.
+ * Formats text segments by adding paragraph breaks after every third period.
+ * HTML tags are passed through unmodified.
+ */
+function _storefront_child_format_text_segment_callback($matches) {
+    if (isset($matches[1]) && !empty($matches[1])) { // HTML Tag
+        return $matches[1]; // Return tag unchanged
+    } elseif (isset($matches[2]) && !empty($matches[2])) { // Text Content
+        $text_segment = $matches[2];
+
+        // Normalize line breaks within the segment for consistent splitting
+        $text_segment = str_replace(array("\r\n", "\r"), "\n", $text_segment);
+        // Also, temporarily replace intentional newlines (like from list items or poetry)
+        // with a placeholder to avoid splitting them as sentences.
+        // This is a simple approach; more complex HTML-aware parsing might be needed for perfect preservation.
+        $text_segment = str_replace("\n", "[SF_CHILD_NL]", $text_segment);
+
+        // Split the current text segment by periods that are likely sentence terminators.
+        // This regex tries to ensure periods followed by space/newline are chosen.
+        $sentences = preg_split('/(?<=\.)(\s+)/', $text_segment, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+
+        $processed_segment = '';
+        $sentence_parts_buffer = array();
+
+        if (empty($sentences)) {
+            // Restore placeholders if no sentences were formed
+            return str_replace("[SF_CHILD_NL]", "\n", $text_segment);
+        }
+
+        $period_count_for_segment = 0;
+
+        for ($i = 0; $i < count($sentences); $i++) {
+            $sentence_part = $sentences[$i];
+            $sentence_parts_buffer[] = $sentence_part;
+
+            // Check if this part ends with a period (or is a delimiter that was a period)
+            if (str_ends_with(trim($sentence_part), '.') || trim($sentence_part) === '.') {
+                 // If the next part is whitespace (delimiter), it means this part was a sentence.
+                if (isset($sentences[$i+1]) && preg_match('/^\s+$/', $sentences[$i+1])) {
+                    $period_count_for_segment++;
+                    // Add the delimiter (whitespace)
+                    $sentence_parts_buffer[] = $sentences[$i+1];
+                    $i++; // Skip the delimiter in the next iteration
+
+                    if ($period_count_for_segment % 3 === 0) {
+                        // Check if this is not the absolute end of the original text segment
+                        // to avoid adding extra paragraph breaks.
+                        $is_last_meaningful_content = true;
+                        for ($j = $i + 1; $j < count($sentences); $j++) {
+                            if (!empty(trim(str_replace("[SF_CHILD_NL]", "", $sentences[$j])))) {
+                                $is_last_meaningful_content = false;
+                                break;
+                            }
+                        }
+                        if (!$is_last_meaningful_content) {
+                            $sentence_parts_buffer[] = "[SF_CHILD_P_BREAK]";
+                        }
+                    }
+                }
+            }
+        }
+
+        $processed_segment = implode('', $sentence_parts_buffer);
+        // Restore intentional newlines and then apply paragraph breaks
+        $processed_segment = str_replace("[SF_CHILD_NL]", "\n", $processed_segment);
+        $processed_segment = str_replace("[SF_CHILD_P_BREAK]", "\n\n", $processed_segment);
+
+        return $processed_segment;
+    }
+    return ''; // Should ideally not be reached if regex is comprehensive
+}
+
+/**
+ * AJAX handler for formatting paragraphs.
+ */
+function storefront_child_ajax_format_paragraphs() {
+    // Check for required POST variables
+    if ( ! isset( $_POST['post_id'], $_POST['nonce'] ) ) {
+        wp_send_json_error( array( 'message' => __( 'Invalid request.', 'storefront-child' ) ), 400 );
+    }
+
+    $post_id = absint( $_POST['post_id'] );
+    $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
+
+    if ( $post_id === 0 ) {
+        wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'storefront-child' ) ), 400 );
+    }
+
+    // 1. Verify Nonce
+    if ( ! wp_verify_nonce( $nonce, 'format_paragraphs_nonce_' . $post_id ) ) {
+        wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'storefront-child' ) ), 403 );
+    }
+
+    // 2. Check User Capabilities
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this post.', 'storefront-child' ) ), 403 );
+    }
+
+    // 3. Fetch Post Content
+    $post = get_post( $post_id );
+    if ( ! $post ) {
+        wp_send_json_error( array( 'message' => __( 'Post not found.', 'storefront-child' ) ), 404 );
+    }
+    $content = $post->post_content;
+
+    // 4. Refined Paragraph Formatting Logic using preg_replace_callback
+    // Normalize initial line breaks to a known state (single \n) to simplify regex later
+    $content_normalized = str_replace(array("\r\n", "\r"), "\n", $content);
+
+    // The main regex splits content into HTML tags and text segments
+    // The 's' modifier allows '.' to match newline characters within text segments.
+    $new_content = preg_replace_callback(
+        '/(<[^>]+>)|([^<]+)/s',
+        '_storefront_child_format_text_segment_callback',
+        $content_normalized
+    );
+
+    // Final trim to remove any leading/trailing whitespace that might have been introduced.
+    $new_content = trim($new_content);
+
+    // If content is effectively unchanged (considering normalization and trimming)
+    if ( trim($new_content) === trim($content_normalized) ) {
+         wp_send_json_success( array( 'message' => __( 'Content already formatted or no significant changes applied by formatting.', 'storefront-child' ), 'status' => 'no_change' ) );
+    }
+
+    // 5. Update Post
+    $updated_post_data = array(
+        'ID'           => $post_id,
+        'post_content' => $new_content, // Use the processed content
+    );
+    $result = wp_update_post( $updated_post_data, true );
+
+    if ( is_wp_error( $result ) ) {
+        wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+    } else {
+        wp_send_json_success( array( 'message' => __( 'Post content formatted (refined HTML handling). Further testing recommended.', 'storefront-child' ), 'status' => 'updated' ) );
+    }
+    // wp_send_json_success/error will call wp_die()
+}
+add_action( 'wp_ajax_storefront_child_format_paragraphs', 'storefront_child_ajax_format_paragraphs' );
+
+/**
+ * Enqueues scripts and styles for admin post list enhancements.
+ *
+ * @param string $hook_suffix The current admin page hook.
+ */
+function storefront_child_enqueue_admin_post_list_scripts( $hook_suffix ) {
+    global $pagenow; // WordPress global for current admin page
+
+    // Check if we are on the main posts list table for 'post' post type
+    $is_post_list_table = false;
+    if ( $pagenow === 'edit.php' ) {
+        if ( ! isset( $_GET['post_type'] ) || ( isset( $_GET['post_type'] ) && $_GET['post_type'] === 'post' ) ) {
+            $is_post_list_table = true;
+        }
+    }
+
+    if ( $is_post_list_table ) {
+        wp_enqueue_script(
+            'admin-post-list-enhancements', // Handle
+            get_stylesheet_directory_uri() . '/js/admin-post-list-enhancements.js',
+            array( 'jquery' ), // Dependencies
+            wp_get_theme()->get('Version'), // Versioning
+            true // Load in footer
+        );
+
+        wp_localize_script(
+            'admin-post-list-enhancements',
+            'adminPostListEnhancementsData', // Object name in JavaScript
+            array(
+                'ajax_url'          => admin_url( 'admin-ajax.php' ),
+                'action'            => 'storefront_child_format_paragraphs', // Matches the AJAX hook
+                'processing_text'   => __( 'Processing...', 'storefront-child' ),
+                'success_text'      => __( 'Post formatted!', 'storefront-child' ),
+                'no_change_text'    => __( 'Content already formatted or no changes made.', 'storefront-child' ),
+                'error_text'        => __( 'An error occurred while formatting.', 'storefront-child' ),
+                'error_text_ajax'   => __( 'AJAX request failed.', 'storefront-child' ),
+                'done_text'         => __( 'Done!', 'storefront-child' ),
+                // Nonce is per-button, so not needed here as a general param.
+                // The JS will pick it up from the data-nonce attribute of the clicked button.
+            )
+        );
+    }
+}
+add_action( 'admin_enqueue_scripts', 'storefront_child_enqueue_admin_post_list_scripts' );
 
 ?>
